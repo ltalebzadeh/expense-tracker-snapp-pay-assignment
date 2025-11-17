@@ -1,7 +1,8 @@
 package com.expensetracker.api.service;
 
-import com.expensetracker.api.controller.dto.CreateExpenseRequest;
-import com.expensetracker.api.controller.dto.ExpenseResponse;
+import com.expensetracker.api.controller.exception.ResourceNotFoundException;
+import com.expensetracker.api.dto.CreateExpenseRequest;
+import com.expensetracker.api.dto.ExpenseResponse;
 import com.expensetracker.api.entity.Category;
 import com.expensetracker.api.entity.Expense;
 import com.expensetracker.api.entity.User;
@@ -20,10 +21,11 @@ public class ExpenseService {
 
     public ExpenseResponse createExpense(CreateExpenseRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + request.getUsername()));
 
         Category category = categoryRepository.findByName(request.getCategoryName())
-                .orElseThrow(() -> new RuntimeException("Category not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryName()));
+
 
         Expense expense = Expense.builder()
                 .amount(request.getAmount())

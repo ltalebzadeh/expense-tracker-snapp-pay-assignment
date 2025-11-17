@@ -1,7 +1,7 @@
 package com.expensetracker.api.controller;
 
-import com.expensetracker.api.controller.dto.CreateExpenseRequest;
-import com.expensetracker.api.controller.dto.ExpenseResponse;
+import com.expensetracker.api.dto.CreateExpenseRequest;
+import com.expensetracker.api.dto.ExpenseResponse;
 import com.expensetracker.api.service.ExpenseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
