@@ -3,6 +3,7 @@ package com.expensetracker.api.service;
 import com.expensetracker.api.controller.exception.ResourceNotFoundException;
 import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
+import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.entity.Category;
 import com.expensetracker.api.entity.Expense;
 import com.expensetracker.api.entity.User;
@@ -63,6 +64,24 @@ public class ExpenseService {
                 .stream()
                 .map(this::toExpenseResponse)
                 .collect(Collectors.toList());
+    }
+
+    public ExpenseResponse updateExpense(Long id, UpdateExpenseRequest request) {
+        User user = getAuthenticatedUser();
+
+        Expense expense = expenseRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found: " + id));
+
+        Category category = categoryRepository.findByName(request.getCategoryName())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryName()));
+
+        expense.setAmount(request.getAmount());
+        expense.setDescription(request.getDescription());
+        expense.setCategory(category);
+        expense.setDate(request.getDate());
+
+        Expense updated = expenseRepository.save(expense);
+        return toExpenseResponse(updated);
     }
 
     private ExpenseResponse toExpenseResponse(Expense expense) {
