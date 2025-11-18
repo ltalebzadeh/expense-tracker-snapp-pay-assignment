@@ -4,6 +4,7 @@ import com.expensetracker.api.controller.exception.CustomExceptionHandler;
 import com.expensetracker.api.controller.exception.ResourceNotFoundException;
 import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
+import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.service.ExpenseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,10 +20,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -109,6 +112,109 @@ class ExpenseControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message").value("Internal server error"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    @WithMockUser(username = "broke_developer")
+    void getAllExpenses_Success() throws Exception {
+        List<ExpenseResponse> responses = List.of(
+                ExpenseResponse.builder()
+                        .id(1L)
+                        .amount(BigDecimal.valueOf(50.00))
+                        .description("Omelette")
+                        .categoryName("Food")
+                        .date(LocalDate.of(2025, 11, 18))
+                        .build(),
+                ExpenseResponse.builder()
+                        .id(2L)
+                        .amount(BigDecimal.valueOf(20.00))
+                        .description("Metro")
+                        .categoryName("Transport")
+                        .date(LocalDate.of(2025, 11, 19))
+                        .build()
+        );
+
+        when(expenseService.getAllExpenses()).thenReturn(responses);
+
+        mockMvc.perform(get("/api/expenses"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].description").value("Omelette"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].description").value("Metro"));
+    }
+
+    @Test
+    @WithMockUser(username = "broke_developer")
+    void getExpensesByCategory_Success() throws Exception {
+        List<ExpenseResponse> responses = List.of(
+                ExpenseResponse.builder()
+                        .id(1L)
+                        .amount(BigDecimal.valueOf(100.00))
+                        .description("Instant spicy noodles")
+                        .categoryName("Food")
+                        .date(LocalDate.of(2025, 11, 19))
+                        .build()
+        );
+
+        when(expenseService.getExpensesByCategory("Food")).thenReturn(responses);
+
+        mockMvc.perform(get("/api/expenses/category/Food"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].description").value("Instant spicy noodles"))
+                .andExpect(jsonPath("$[0].categoryName").value("Food"));
+    }
+
+    @Test
+    @WithMockUser(username = "broke_developer")
+    void updateExpense_Success() throws Exception {
+        UpdateExpenseRequest request = new UpdateExpenseRequest();
+        request.setAmount(BigDecimal.valueOf(200.00));
+        request.setDescription("Energy drinks");
+        request.setCategoryName("Food");
+        request.setDate(LocalDate.of(2025, 11, 19));
+
+        ExpenseResponse response = ExpenseResponse.builder()
+                .id(1L)
+                .amount(BigDecimal.valueOf(200.00))
+                .description("Energy drinks")
+                .categoryName("Food")
+                .date(LocalDate.of(2025, 11, 19))
+                .build();
+
+        when(expenseService.updateExpense(eq(1L), any(UpdateExpenseRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/expenses/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.amount").value(200.00))
+                .andExpect(jsonPath("$.description").value("Energy drinks"));
+    }
+
+    @Test
+    @WithMockUser(username = "broke_developer")
+    void deleteExpense_Success() throws Exception {
+        doNothing().when(expenseService).deleteExpense(1L);
+
+        mockMvc.perform(delete("/api/expenses/1"))
+                .andExpect(status().isOk());
+
+        verify(expenseService).deleteExpense(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "broke_developer")
+    void deleteExpense_NotOwnedByUser_ReturnsNotFound() throws Exception {
+        doThrow(new ResourceNotFoundException("Expense not found: 999"))
+                .when(expenseService).deleteExpense(999L);
+
+        mockMvc.perform(delete("/api/expenses/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Expense not found: 999"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 }
