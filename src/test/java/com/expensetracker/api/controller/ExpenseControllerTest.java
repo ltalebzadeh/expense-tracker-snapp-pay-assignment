@@ -217,4 +217,22 @@ class ExpenseControllerTest {
                 .andExpect(jsonPath("$.message").value("Expense not found: 999"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
+
+    @Test
+    @WithMockUser(username = "broke_developer")
+    void createExpense_InvalidArguments_ReturnsValidationFailed() throws Exception {
+        request.setAmount(BigDecimal.valueOf(-420.5));
+        request.setDescription("Pizza at 3 AM");
+        request.setCategoryName("");
+        request.setDate(null);
+
+        mockMvc.perform(post("/api/expenses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.errors.date").value("Date is required"))
+                .andExpect(jsonPath("$.errors.amount").value("Amount must be positive"))
+                .andExpect(jsonPath("$.errors.categoryName").value("Category name is required"));
+    }
 }

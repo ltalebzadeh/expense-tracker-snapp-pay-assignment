@@ -46,7 +46,7 @@ class AuthControllerTest {
     @Test
     void register_Success() throws Exception {
         request.setUsername("coffee_addict");
-        request.setPassword("8020");
+        request.setPassword("802080");
 
         User user = User.builder()
                 .id(1L)
@@ -67,7 +67,7 @@ class AuthControllerTest {
     @Test
     void register_DuplicateUsername_ReturnsConflict() throws Exception {
         request.setUsername("broke_developer");
-        request.setPassword("1234");
+        request.setPassword("123456");
 
         when(userService.register(any(RegisterRequest.class)))
                 .thenThrow(new DuplicateResourceException("Username already exists: broke_developer"));
