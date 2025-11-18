@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -47,12 +48,12 @@ class ExpenseControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "broke_developer")
     void createExpense_Success() throws Exception {
         request.setAmount(BigDecimal.valueOf(420.5));
         request.setDescription("Pizza at 3 AM");
         request.setCategoryName("Food");
         request.setDate(LocalDate.of(2025, 11, 18));
-        request.setUsername("broke_developer");
 
         ExpenseResponse response = ExpenseResponse.builder()
                 .id(1L)
@@ -75,8 +76,8 @@ class ExpenseControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "broke_developer")
     void createExpense_CategoryNotFound_ReturnsCategoryNotFound() throws Exception {
-        request.setUsername("broke_developer");
         request.setCategoryName("Luxury");
         request.setAmount(BigDecimal.valueOf(50000.00));
         request.setDate(LocalDate.now());
@@ -93,12 +94,12 @@ class ExpenseControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "broke_developer")
     void createExpense_GenericException_ReturnsInternalServerError() throws Exception {
         request.setAmount(BigDecimal.valueOf(420.5));
         request.setDescription("Pizza at 3 AM");
         request.setCategoryName("Food");
         request.setDate(LocalDate.of(2025, 11, 18));
-        request.setUsername("broke_developer");
 
         when(expenseService.createExpense(any(CreateExpenseRequest.class)))
                 .thenThrow(new RuntimeException("System is done"));

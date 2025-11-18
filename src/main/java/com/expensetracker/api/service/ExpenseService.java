@@ -10,6 +10,8 @@ import com.expensetracker.api.repository.CategoryRepository;
 import com.expensetracker.api.repository.ExpenseRepository;
 import com.expensetracker.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,8 +22,10 @@ public class ExpenseService {
     private final CategoryRepository categoryRepository;
 
     public ExpenseResponse createExpense(CreateExpenseRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + request.getUsername()));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
         Category category = categoryRepository.findByName(request.getCategoryName())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryName()));

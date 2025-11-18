@@ -9,11 +9,15 @@ import com.expensetracker.api.entity.User;
 import com.expensetracker.api.repository.CategoryRepository;
 import com.expensetracker.api.repository.ExpenseRepository;
 import com.expensetracker.api.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,8 +39,21 @@ class ExpenseServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
 
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
     @InjectMocks
     private ExpenseService expenseService;
+
+    @BeforeEach
+    void setUp() {
+        SecurityContextHolder.setContext(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn("broke_developer");
+    }
 
     @Test
     void createExpense_Success() {
@@ -46,7 +63,6 @@ class ExpenseServiceTest {
         request.setDescription("Pizza at 3 AM");
         request.setCategoryName("Food");
         request.setDate(LocalDate.of(2025, 11, 18));
-        request.setUsername("broke_developer");
 
         User user = new User();
         user.setId(1L);
@@ -87,10 +103,9 @@ class ExpenseServiceTest {
     void createExpense_UserNotFound() {
         // setUp
         CreateExpenseRequest request = new CreateExpenseRequest();
-        request.setUsername("rich_developer");
         request.setCategoryName("Luxury");
 
-        when(userRepository.findByUsername("rich_developer")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.empty());
 
         // assert
         ResourceNotFoundException exception = assertThrows(
@@ -99,7 +114,7 @@ class ExpenseServiceTest {
         );
 
         assertTrue(exception.getMessage().contains("User not found"));
-        verify(userRepository).findByUsername("rich_developer");
+        verify(userRepository).findByUsername("broke_developer");
         verify(categoryRepository, never()).findByName(any());
         verify(expenseRepository, never()).save(any());
     }
@@ -108,7 +123,6 @@ class ExpenseServiceTest {
     void createExpense_CategoryNotFound() {
         // setUp
         CreateExpenseRequest request = new CreateExpenseRequest();
-        request.setUsername("broke_developer");
         request.setCategoryName("Luxury");
 
         User user = new User();

@@ -11,5 +11,4 @@ public class CreateExpenseRequest {
     private LocalDate date;
     private String description;
     private String categoryName;
-    private String username;
 }
