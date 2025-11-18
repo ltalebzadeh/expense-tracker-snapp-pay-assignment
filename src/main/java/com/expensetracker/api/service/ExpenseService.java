@@ -84,6 +84,15 @@ public class ExpenseService {
         return toExpenseResponse(updated);
     }
 
+    public void deleteExpense(Long id) {
+        User user = getAuthenticatedUser();
+
+        Expense expense = expenseRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found: " + id));
+
+        expenseRepository.delete(expense);
+    }
+
     private ExpenseResponse toExpenseResponse(Expense expense) {
         return ExpenseResponse.builder()
                 .id(expense.getId())
