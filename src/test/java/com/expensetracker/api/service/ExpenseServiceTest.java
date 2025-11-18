@@ -3,6 +3,7 @@ package com.expensetracker.api.service;
 import com.expensetracker.api.controller.exception.ResourceNotFoundException;
 import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
+import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.entity.Category;
 import com.expensetracker.api.entity.Expense;
 import com.expensetracker.api.entity.User;
@@ -21,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -140,5 +142,162 @@ class ExpenseServiceTest {
         assertTrue(exception.getMessage().contains("Category not found"));
         verify(categoryRepository).findByName("Luxury");
         verify(expenseRepository, never()).save(any());
+    }
+
+    @Test
+    void getAllExpenses_Success() {
+        // setUp
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("broke_developer");
+
+        Category category1 = new Category();
+        category1.setId(1L);
+        category1.setName("Food");
+
+        Category category2 = new Category();
+        category2.setId(2L);
+        category2.setName("Transport");
+
+        Expense expense1 = Expense.builder()
+                .id(1L)
+                .amount(BigDecimal.valueOf(50.00))
+                .description("Omelette")
+                .category(category1)
+                .date(LocalDate.now())
+                .user(user)
+                .build();
+
+        Expense expense2 = Expense.builder()
+                .id(2L)
+                .amount(BigDecimal.valueOf(8.00))
+                .description("Metro")
+                .category(category2)
+                .date(LocalDate.now())
+                .user(user)
+                .build();
+
+        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
+        when(expenseRepository.findByUserId(1L)).thenReturn(List.of(expense1, expense2));
+
+        List<ExpenseResponse> responses = expenseService.getAllExpenses();
+
+        // assert
+        assertEquals(2, responses.size());
+        assertEquals("Omelette", responses.get(0).getDescription());
+        assertEquals("Metro", responses.get(1).getDescription());
+        verify(expenseRepository).findByUserId(1L);
+    }
+
+    @Test
+    void getExpensesByCategory_Success() {
+        // setUp
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("broke_developer");
+
+        Category category = new Category();
+        category.setId(1L);
+        category.setName("Food");
+
+        Expense expense = Expense.builder()
+                .id(1L)
+                .amount(BigDecimal.valueOf(150.00))
+                .description("Instance spicy noodles")
+                .category(category)
+                .date(LocalDate.now())
+                .user(user)
+                .build();
+
+        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
+        when(expenseRepository.findByUserIdAndCategoryName(1L, "Food")).thenReturn(List.of(expense));
+
+        List<ExpenseResponse> responses = expenseService.getExpensesByCategory("Food");
+
+        // assert
+        assertEquals(1, responses.size());
+        assertEquals("Instance spicy noodles", responses.get(0).getDescription());
+        assertEquals("Food", responses.get(0).getCategoryName());
+        verify(expenseRepository).findByUserIdAndCategoryName(1L, "Food");
+    }
+
+    @Test
+    void updateExpense_Success() {
+        // setUp
+        UpdateExpenseRequest request = new UpdateExpenseRequest();
+        request.setAmount(BigDecimal.valueOf(200.00));
+        request.setDescription("Energy drinks");
+        request.setCategoryName("Food");
+        request.setDate(LocalDate.of(2025, 11, 19));
+
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("broke_developer");
+
+        Category category = new Category();
+        category.setId(1L);
+        category.setName("Food");
+
+        Expense existingExpense = Expense.builder()
+                .id(1L)
+                .amount(BigDecimal.valueOf(50.00))
+                .description("Old description")
+                .category(category)
+                .date(LocalDate.now())
+                .user(user)
+                .build();
+
+        Expense updatedExpense = Expense.builder()
+                .id(1L)
+                .amount(request.getAmount())
+                .description(request.getDescription())
+                .category(category)
+                .date(request.getDate())
+                .user(user)
+                .build();
+
+        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
+        when(expenseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(existingExpense));
+        when(categoryRepository.findByName("Food")).thenReturn(Optional.of(category));
+        when(expenseRepository.save(any(Expense.class))).thenReturn(updatedExpense);
+
+        ExpenseResponse response = expenseService.updateExpense(1L, request);
+
+        // assert
+        assertNotNull(response);
+        assertEquals(1L, response.getId());
+        assertEquals(BigDecimal.valueOf(200.00), response.getAmount());
+        assertEquals("Energy drinks", response.getDescription());
+        verify(expenseRepository).findByIdAndUserId(1L, 1L);
+    }
+
+    @Test
+    void deleteExpense_Success() {
+        // setUp
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("broke_developer");
+
+        Category category = new Category();
+        category.setId(1L);
+        category.setName("Food");
+
+        Expense expense = Expense.builder()
+                .id(1L)
+                .amount(BigDecimal.valueOf(50.00))
+                .description("Regrettable purchase")
+                .category(category)
+                .date(LocalDate.now())
+                .user(user)
+                .build();
+
+        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
+        when(expenseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(expense));
+
+        expenseService.deleteExpense(1L);
+
+        // assert
+        verify(expenseRepository).findByIdAndUserId(1L, 1L);
+        verify(expenseRepository).delete(expense);
     }
 }
