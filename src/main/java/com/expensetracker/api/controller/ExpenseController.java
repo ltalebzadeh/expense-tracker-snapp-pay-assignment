@@ -2,12 +2,12 @@ package com.expensetracker.api.controller;
 
 import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
+import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.service.ExpenseService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/expenses")
@@ -19,5 +19,25 @@ public class ExpenseController {
     @PostMapping
     public ExpenseResponse createExpense(@RequestBody CreateExpenseRequest request) {
         return expenseService.createExpense(request);
+    }
+
+    @GetMapping
+    public List<ExpenseResponse> getAllExpenses() {
+        return expenseService.getAllExpenses();
+    }
+
+    @GetMapping("/category/{categoryName}")
+    public List<ExpenseResponse> getExpensesByCategory(@PathVariable String categoryName) {
+        return expenseService.getExpensesByCategory(categoryName);
+    }
+
+    @PutMapping("/{id}")
+    public ExpenseResponse updateExpense(@PathVariable Long id, @RequestBody UpdateExpenseRequest request) {
+        return expenseService.updateExpense(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteExpense(@PathVariable Long id) {
+        expenseService.deleteExpense(id);
     }
 }
