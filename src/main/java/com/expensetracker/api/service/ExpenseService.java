@@ -14,6 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ExpenseService {
@@ -21,32 +24,54 @@ public class ExpenseService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
 
-    public ExpenseResponse createExpense(CreateExpenseRequest request) {
+    private User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+    }
+
+    public ExpenseResponse createExpense(CreateExpenseRequest request) {
+        User user = getAuthenticatedUser();
 
         Category category = categoryRepository.findByName(request.getCategoryName())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryName()));
 
-
         Expense expense = Expense.builder()
                 .amount(request.getAmount())
                 .description(request.getDescription())
-                .date(request.getDate())
                 .category(category)
+                .date(request.getDate())
                 .user(user)
                 .build();
 
         Expense saved = expenseRepository.save(expense);
+        return toExpenseResponse(saved);
+    }
 
+    public List<ExpenseResponse> getAllExpenses() {
+        User user = getAuthenticatedUser();
+        return expenseRepository.findByUserId(user.getId())
+                .stream()
+                .map(this::toExpenseResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ExpenseResponse> getExpensesByCategory(String categoryName) {
+        User user = getAuthenticatedUser();
+        return expenseRepository.findByUserIdAndCategoryName(user.getId(), categoryName)
+                .stream()
+                .map(this::toExpenseResponse)
+                .collect(Collectors.toList());
+    }
+
+    private ExpenseResponse toExpenseResponse(Expense expense) {
         return ExpenseResponse.builder()
-                .id(saved.getId())
-                .amount(saved.getAmount())
-                .description(saved.getDescription())
-                .categoryName(saved.getCategory().getName())
-                .date(saved.getDate())
+                .id(expense.getId())
+                .amount(expense.getAmount())
+                .description(expense.getDescription())
+                .categoryName(expense.getCategory().getName())
+                .date(expense.getDate())
                 .build();
     }
 }
