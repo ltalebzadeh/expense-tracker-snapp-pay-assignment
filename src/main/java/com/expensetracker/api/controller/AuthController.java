@@ -3,6 +3,7 @@ package com.expensetracker.api.controller;
 import com.expensetracker.api.dto.RegisterRequest;
 import com.expensetracker.api.entity.User;
 import com.expensetracker.api.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +20,7 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public Map<String, String> register(@RequestBody RegisterRequest request) {
+    public Map<String, String> register(@Valid @RequestBody RegisterRequest request) {
         User user = userService.register(request);
         return Map.of("message", "User registered successfully", "username", user.getUsername());
     }

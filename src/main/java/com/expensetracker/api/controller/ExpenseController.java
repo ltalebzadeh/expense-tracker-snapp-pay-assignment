@@ -4,6 +4,7 @@ import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
 import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.service.ExpenseService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +18,7 @@ public class ExpenseController {
     private final ExpenseService expenseService;
 
     @PostMapping
-    public ExpenseResponse createExpense(@RequestBody CreateExpenseRequest request) {
+    public ExpenseResponse createExpense(@Valid @RequestBody CreateExpenseRequest request) {
         return expenseService.createExpense(request);
     }
 
@@ -32,7 +33,7 @@ public class ExpenseController {
     }
 
     @PutMapping("/{id}")
-    public ExpenseResponse updateExpense(@PathVariable Long id, @RequestBody UpdateExpenseRequest request) {
+    public ExpenseResponse updateExpense(@PathVariable Long id, @Valid @RequestBody UpdateExpenseRequest request) {
         return expenseService.updateExpense(id, request);
     }
 
