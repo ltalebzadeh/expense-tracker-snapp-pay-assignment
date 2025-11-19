@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -14,4 +15,5 @@ public class MonthlyReportResponse {
     private BigDecimal totalAmount;
     private int expenseCount;
     private Map<String, BigDecimal> spendingByCategory;
+    private List<String> alerts;
 }

@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -105,19 +106,34 @@ public class ExpenseService {
                 .map(Expense::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Map<String, BigDecimal> categoryBreakdown = expenses.stream()
+        Map<String, BigDecimal> spendingByCategory = expenses.stream()
                 .collect(Collectors.groupingBy(
                         expense -> expense.getCategory().getName(),
                         Collectors.reducing(BigDecimal.ZERO, Expense::getAmount, BigDecimal::add)
                 ));
+
+        List<String> alerts = generateAlerts(spendingByCategory);
 
         return MonthlyReportResponse.builder()
                 .year(year)
                 .month(month)
                 .totalAmount(totalAmount)
                 .expenseCount(expenses.size())
-                .spendingByCategory(categoryBreakdown)
+                .spendingByCategory(spendingByCategory)
+                .alerts(alerts)
                 .build();
+    }
+
+    private List<String> generateAlerts(Map<String, BigDecimal> spendingByCategory) {
+        List<String> alerts = new ArrayList<>();
+
+        spendingByCategory.forEach((category, amount) -> {
+            if (amount.compareTo(BigDecimal.valueOf(2000)) > 0) {
+                alerts.add(String.format("Warning: You spent %.2f on %s this month!", amount, category));
+            }
+        });
+
+        return alerts;
     }
 
     private ExpenseResponse toExpenseResponse(Expense expense) {
