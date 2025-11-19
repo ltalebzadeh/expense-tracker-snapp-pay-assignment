@@ -3,6 +3,7 @@ package com.expensetracker.api.service;
 import com.expensetracker.api.controller.exception.ResourceNotFoundException;
 import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
+import com.expensetracker.api.dto.MonthlyReportResponse;
 import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.entity.Category;
 import com.expensetracker.api.entity.Expense;
@@ -15,7 +16,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -91,6 +94,30 @@ public class ExpenseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found: " + id));
 
         expenseRepository.delete(expense);
+    }
+
+    public MonthlyReportResponse getMonthlyReport(int year, int month) {
+        User user = getAuthenticatedUser();
+
+        List<Expense> expenses = expenseRepository.findByUserIdAndYearAndMonth(user.getId(), year, month);
+
+        BigDecimal totalAmount = expenses.stream()
+                .map(Expense::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Map<String, BigDecimal> categoryBreakdown = expenses.stream()
+                .collect(Collectors.groupingBy(
+                        expense -> expense.getCategory().getName(),
+                        Collectors.reducing(BigDecimal.ZERO, Expense::getAmount, BigDecimal::add)
+                ));
+
+        return MonthlyReportResponse.builder()
+                .year(year)
+                .month(month)
+                .totalAmount(totalAmount)
+                .expenseCount(expenses.size())
+                .spendingByCategory(categoryBreakdown)
+                .build();
     }
 
     private ExpenseResponse toExpenseResponse(Expense expense) {
