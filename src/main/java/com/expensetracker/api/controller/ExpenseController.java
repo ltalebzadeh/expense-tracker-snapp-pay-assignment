@@ -2,6 +2,7 @@ package com.expensetracker.api.controller;
 
 import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
+import com.expensetracker.api.dto.MonthlyReportResponse;
 import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.service.ExpenseService;
 import jakarta.validation.Valid;
@@ -40,5 +41,10 @@ public class ExpenseController {
     @DeleteMapping("/{id}")
     public void deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);
+    }
+
+    @GetMapping("/report")
+    public MonthlyReportResponse getMonthlyReport(@RequestParam int year, @RequestParam int month) {
+        return expenseService.getMonthlyReport(year, month);
     }
 }
