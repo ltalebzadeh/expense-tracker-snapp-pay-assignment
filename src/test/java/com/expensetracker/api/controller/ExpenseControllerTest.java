@@ -4,6 +4,7 @@ import com.expensetracker.api.controller.exception.CustomExceptionHandler;
 import com.expensetracker.api.controller.exception.ResourceNotFoundException;
 import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
+import com.expensetracker.api.dto.MonthlyReportResponse;
 import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.service.ExpenseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -234,5 +237,36 @@ class ExpenseControllerTest {
                 .andExpect(jsonPath("$.errors.date").value("Date is required"))
                 .andExpect(jsonPath("$.errors.amount").value("Amount must be positive"))
                 .andExpect(jsonPath("$.errors.categoryName").value("Category name is required"));
+    }
+
+    @Test
+    @WithMockUser(username = "broke_developer")
+    void getMonthlyReport_Success() throws Exception {
+        Map<String, BigDecimal> spendingByCategory = new HashMap<>();
+        spendingByCategory.put("Coffee", BigDecimal.valueOf(2300.00));
+        spendingByCategory.put("Food", BigDecimal.valueOf(500.00));
+
+        MonthlyReportResponse report = MonthlyReportResponse.builder()
+                .year(2025)
+                .month(11)
+                .totalAmount(BigDecimal.valueOf(2800.00))
+                .expenseCount(3)
+                .spendingByCategory(spendingByCategory)
+                .alerts(List.of("Spending too much money on coffee... like a usual developer."))
+                .build();
+
+        when(expenseService.getMonthlyReport(2025, 11)).thenReturn(report);
+
+        mockMvc.perform(get("/api/expenses/report")
+                        .param("year", "2025")
+                        .param("month", "11"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.year").value(2025))
+                .andExpect(jsonPath("$.month").value(11))
+                .andExpect(jsonPath("$.totalAmount").value(2800.00))
+                .andExpect(jsonPath("$.expenseCount").value(3))
+                .andExpect(jsonPath("$.spendingByCategory.Coffee").value(2300.00))
+                .andExpect(jsonPath("$.spendingByCategory.Food").value(500.00))
+                .andExpect(jsonPath("$.alerts[0]").value("Spending too much money on coffee... like a usual developer."));
     }
 }

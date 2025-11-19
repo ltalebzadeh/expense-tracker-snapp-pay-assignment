@@ -3,6 +3,7 @@ package com.expensetracker.api.service;
 import com.expensetracker.api.controller.exception.ResourceNotFoundException;
 import com.expensetracker.api.dto.CreateExpenseRequest;
 import com.expensetracker.api.dto.ExpenseResponse;
+import com.expensetracker.api.dto.MonthlyReportResponse;
 import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.entity.Category;
 import com.expensetracker.api.entity.Expense;
@@ -299,5 +300,110 @@ class ExpenseServiceTest {
         // assert
         verify(expenseRepository).findByIdAndUserId(1L, 1L);
         verify(expenseRepository).delete(expense);
+    }
+
+    @Test
+    void getMonthlyReport_Success() {
+        // setUp
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("broke_developer");
+
+        Category coffeeCategory = new Category();
+        coffeeCategory.setId(1L);
+        coffeeCategory.setName("Coffee");
+
+        Category foodCategory = new Category();
+        foodCategory.setId(2L);
+        foodCategory.setName("Food");
+
+        Expense expense1 = Expense.builder()
+                .id(1L)
+                .amount(BigDecimal.valueOf(150.00))
+                .description("Lamiz addiction phase 1")
+                .category(coffeeCategory)
+                .date(LocalDate.of(2025, 11, 5))
+                .user(user)
+                .build();
+
+        Expense expense2 = Expense.builder()
+                .id(2L)
+                .amount(BigDecimal.valueOf(80.00))
+                .description("More coffee to survive deadlines")
+                .category(coffeeCategory)
+                .date(LocalDate.of(2025, 11, 15))
+                .user(user)
+                .build();
+
+        Expense expense3 = Expense.builder()
+                .id(3L)
+                .amount(BigDecimal.valueOf(50.00))
+                .description("Night pizza")
+                .category(foodCategory)
+                .date(LocalDate.of(2025, 11, 20))
+                .user(user)
+                .build();
+
+        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
+        when(expenseRepository.findByUserIdAndYearAndMonth(1L, 2025, 11))
+                .thenReturn(List.of(expense1, expense2, expense3));
+
+        MonthlyReportResponse report = expenseService.getMonthlyReport(2025, 11);
+
+        // assert
+        assertNotNull(report);
+        assertEquals(2025, report.getYear());
+        assertEquals(11, report.getMonth());
+        assertEquals(BigDecimal.valueOf(280.00), report.getTotalAmount());
+        assertEquals(3, report.getExpenseCount());
+        assertEquals(BigDecimal.valueOf(230.00), report.getSpendingByCategory().get("Coffee"));
+        assertEquals(BigDecimal.valueOf(50.00), report.getSpendingByCategory().get("Food"));
+        assertTrue(report.getAlerts().isEmpty());
+        verify(expenseRepository).findByUserIdAndYearAndMonth(1L, 2025, 11);
+    }
+
+    @Test
+    void getMonthlyReport_WithAlerts_ReturnsMultipleAlerts() {
+        // setUp
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("broke_developer");
+
+        Category coffeeCategory = new Category();
+        coffeeCategory.setId(1L);
+        coffeeCategory.setName("Coffee");
+
+        Category foodCategory = new Category();
+        foodCategory.setId(2L);
+        foodCategory.setName("Food");
+
+        Expense expense1 = Expense.builder()
+                .id(1L)
+                .amount(BigDecimal.valueOf(2100.00))
+                .description("Coffee overload")
+                .category(coffeeCategory)
+                .date(LocalDate.of(2025, 11, 5))
+                .user(user)
+                .build();
+
+        Expense expense2 = Expense.builder()
+                .id(2L)
+                .amount(BigDecimal.valueOf(2500.00))
+                .description("Too much takeout")
+                .category(foodCategory)
+                .date(LocalDate.of(2025, 11, 15))
+                .user(user)
+                .build();
+
+        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
+        when(expenseRepository.findByUserIdAndYearAndMonth(1L, 2025, 11))
+                .thenReturn(List.of(expense1, expense2));
+
+        MonthlyReportResponse report = expenseService.getMonthlyReport(2025, 11);
+
+        // assert
+        assertEquals(2, report.getAlerts().size());
+        assertTrue(report.getAlerts().stream().anyMatch(alert -> alert.contains("Coffee")));
+        assertTrue(report.getAlerts().stream().anyMatch(alert -> alert.contains("Food")));
     }
 }
