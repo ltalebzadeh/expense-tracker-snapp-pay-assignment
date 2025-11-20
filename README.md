@@ -5,6 +5,7 @@ A RESTful backend API for managing personal expenses, built with Spring Boot and
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.7-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
+[![CI Pipeline](https://github.com/ltalebzadeh/expense-tracker-snapp-pay-assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/ltalebzadeh/expense-tracker-snapp-pay-assignment.git/actions/workflows/ci.yml)
 
 ---
 ## Why This Project?
@@ -89,6 +90,7 @@ The expense tracker domain was chosen as it's relatable, requires CRUD operation
 **Build & Deployment:**
 - Maven
 - Docker & Docker Compose
+- GitHub Actions (CI/CD)
 
 **Testing:**
 - JUnit 5
@@ -495,6 +497,10 @@ Navigate to `http://localhost:8080/swagger-ui.html`
 ---
 
 ## Testing
+
+### Automated Testing
+
+All tests run automatically on every push and pull request via GitHub Actions CI/CD pipeline.
 
 ### Run All Tests
 
