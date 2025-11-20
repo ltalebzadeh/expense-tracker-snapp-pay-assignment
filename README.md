@@ -116,14 +116,6 @@ Repository Layer (Data Access)
 PostgreSQL Database
 ```
 
-**Benefits:**
-- Clear separation of concerns
-- Easy to test (mock dependencies)
-- Maintainable and scalable
-- Standard Spring Boot practice
-- Adequate for assignment scope
-
-
 
 ### Key Design Decisions
 
@@ -166,7 +158,7 @@ Triggers when category spending exceeds 2000 units/month. Configurable in `Expen
 
 ```bash
 git clone https://github.com/ltalebzadeh/expense-tracker-snapp-pay-assignment.git
-cd expense-tracker-api
+cd expense-tracker-snapp-pay-assignment
 ```
 
 ---
@@ -575,7 +567,8 @@ expense-tracker-api/
 │   └── test/
 │       └── java/com/expensetracker/api/
 │           ├── controller/       # Controller tests
-│           └── service/          # Service tests
+│           ├── service/          # Service tests
+│           └── integration/      # Integration test
 ├── docker-compose.yml            # Docker orchestration
 ├── Dockerfile                    # Application container
 ├── pom.xml                       # Maven dependencies
@@ -592,7 +585,7 @@ expense-tracker-api/
 - Role-based access control (admin vs regular users)
 - JWT authentication for stateless scaling
 - Rate limiting on registration endpoint
-- Password strength requirements
+- Password strength requirement
 
 **Features:**
 - Budget limits per category
@@ -602,12 +595,13 @@ expense-tracker-api/
 - Multi-currency support
 
 **Architecture:**
+- Transaction management for complex multi-step operations
+- Optimistic locking (@Version) for handling concurrent updates
 - Caching layer (Redis)
 - Event-driven architecture for notifications
 - Elasticsearch for advanced search
 
 **DevOps:**
-- CI/CD pipeline (GitHub Actions)
 - Kubernetes deployment
 - Monitoring with Prometheus/Grafana
 - Centralized logging (ELK stack)
