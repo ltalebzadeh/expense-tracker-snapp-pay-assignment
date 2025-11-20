@@ -13,8 +13,11 @@ import org.springframework.stereotype.Service;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final UserService userService;
 
     public CategoryResponse createCategory(CreateCategoryRequest request) {
+        userService.getAuthenticatedUser();
+
         if (categoryRepository.findByName(request.getName()).isPresent()) {
             throw new DuplicateResourceException("Category already exists: " + request.getName());
         }
