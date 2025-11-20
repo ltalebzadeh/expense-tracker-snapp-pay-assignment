@@ -12,8 +12,6 @@ import com.expensetracker.api.repository.CategoryRepository;
 import com.expensetracker.api.repository.ExpenseRepository;
 import com.expensetracker.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -26,18 +24,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
-    private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
-
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
-    }
+    private final UserService userService;
 
     public ExpenseResponse createExpense(CreateExpenseRequest request) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
 
         Category category = categoryRepository.findByName(request.getCategoryName())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + request.getCategoryName()));
@@ -55,7 +46,7 @@ public class ExpenseService {
     }
 
     public List<ExpenseResponse> getAllExpenses() {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         return expenseRepository.findByUserId(user.getId())
                 .stream()
                 .map(this::toExpenseResponse)
@@ -63,7 +54,7 @@ public class ExpenseService {
     }
 
     public List<ExpenseResponse> getExpensesByCategory(String categoryName) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         return expenseRepository.findByUserIdAndCategoryName(user.getId(), categoryName)
                 .stream()
                 .map(this::toExpenseResponse)
@@ -71,7 +62,7 @@ public class ExpenseService {
     }
 
     public ExpenseResponse updateExpense(Long id, UpdateExpenseRequest request) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
 
         Expense expense = expenseRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found: " + id));
@@ -89,7 +80,7 @@ public class ExpenseService {
     }
 
     public void deleteExpense(Long id) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
 
         Expense expense = expenseRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found: " + id));
@@ -98,7 +89,7 @@ public class ExpenseService {
     }
 
     public MonthlyReportResponse getMonthlyReport(int year, int month) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
 
         List<Expense> expenses = expenseRepository.findByUserIdAndYearAndMonth(user.getId(), year, month);
 

@@ -1,10 +1,13 @@
 package com.expensetracker.api.service;
 
 import com.expensetracker.api.controller.exception.DuplicateResourceException;
+import com.expensetracker.api.controller.exception.ResourceNotFoundException;
 import com.expensetracker.api.dto.RegisterRequest;
 import com.expensetracker.api.entity.User;
 import com.expensetracker.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,5 +29,12 @@ public class UserService {
                 .build();
 
         return userRepository.save(user);
+    }
+
+    public User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
     }
 }

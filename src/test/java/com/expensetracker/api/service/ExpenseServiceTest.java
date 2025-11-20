@@ -10,16 +10,12 @@ import com.expensetracker.api.entity.Expense;
 import com.expensetracker.api.entity.User;
 import com.expensetracker.api.repository.CategoryRepository;
 import com.expensetracker.api.repository.ExpenseRepository;
-import com.expensetracker.api.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,25 +33,22 @@ class ExpenseServiceTest {
     private ExpenseRepository expenseRepository;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
     private CategoryRepository categoryRepository;
 
     @Mock
-    private SecurityContext securityContext;
-
-    @Mock
-    private Authentication authentication;
+    private UserService userService;
 
     @InjectMocks
     private ExpenseService expenseService;
 
+    private User user;
+
     @BeforeEach
     void setUp() {
-        SecurityContextHolder.setContext(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("broke_developer");
+        user = new User();
+        user.setId(1L);
+        user.setUsername("broke_developer");
+        when(userService.getAuthenticatedUser()).thenReturn(user);
     }
 
     @Test
@@ -66,10 +59,6 @@ class ExpenseServiceTest {
         request.setDescription("Pizza at 3 AM");
         request.setCategoryName("Food");
         request.setDate(LocalDate.of(2025, 11, 18));
-
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("broke_developer");
 
         Category category = new Category();
         category.setId(1L);
@@ -84,7 +73,6 @@ class ExpenseServiceTest {
                 .user(user)
                 .build();
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
         when(categoryRepository.findByName("Food")).thenReturn(Optional.of(category));
         when(expenseRepository.save(any(Expense.class))).thenReturn(savedExpense);
 
@@ -97,7 +85,7 @@ class ExpenseServiceTest {
         assertEquals("Pizza at 3 AM", response.getDescription());
         assertEquals("Food", response.getCategoryName());
 
-        verify(userRepository).findByUsername("broke_developer");
+        verify(userService).getAuthenticatedUser();
         verify(categoryRepository).findByName("Food");
         verify(expenseRepository).save(any(Expense.class));
     }
@@ -108,7 +96,7 @@ class ExpenseServiceTest {
         CreateExpenseRequest request = new CreateExpenseRequest();
         request.setCategoryName("Luxury");
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.empty());
+        when(userService.getAuthenticatedUser()).thenThrow(new ResourceNotFoundException("User not found"));
 
         // assert
         ResourceNotFoundException exception = assertThrows(
@@ -117,7 +105,7 @@ class ExpenseServiceTest {
         );
 
         assertTrue(exception.getMessage().contains("User not found"));
-        verify(userRepository).findByUsername("broke_developer");
+        verify(userService).getAuthenticatedUser();
         verify(categoryRepository, never()).findByName(any());
         verify(expenseRepository, never()).save(any());
     }
@@ -131,7 +119,6 @@ class ExpenseServiceTest {
         User user = new User();
         user.setUsername("broke_developer");
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
         when(categoryRepository.findByName("Luxury")).thenReturn(Optional.empty());
 
         // assert
@@ -178,7 +165,6 @@ class ExpenseServiceTest {
                 .user(user)
                 .build();
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
         when(expenseRepository.findByUserId(1L)).thenReturn(List.of(expense1, expense2));
 
         List<ExpenseResponse> responses = expenseService.getAllExpenses();
@@ -210,7 +196,6 @@ class ExpenseServiceTest {
                 .user(user)
                 .build();
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
         when(expenseRepository.findByUserIdAndCategoryName(1L, "Food")).thenReturn(List.of(expense));
 
         List<ExpenseResponse> responses = expenseService.getExpensesByCategory("Food");
@@ -257,7 +242,6 @@ class ExpenseServiceTest {
                 .user(user)
                 .build();
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
         when(expenseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(existingExpense));
         when(categoryRepository.findByName("Food")).thenReturn(Optional.of(category));
         when(expenseRepository.save(any(Expense.class))).thenReturn(updatedExpense);
@@ -292,7 +276,6 @@ class ExpenseServiceTest {
                 .user(user)
                 .build();
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
         when(expenseRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(expense));
 
         expenseService.deleteExpense(1L);
@@ -344,7 +327,6 @@ class ExpenseServiceTest {
                 .user(user)
                 .build();
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
         when(expenseRepository.findByUserIdAndYearAndMonth(1L, 2025, 11))
                 .thenReturn(List.of(expense1, expense2, expense3));
 
@@ -395,7 +377,6 @@ class ExpenseServiceTest {
                 .user(user)
                 .build();
 
-        when(userRepository.findByUsername("broke_developer")).thenReturn(Optional.of(user));
         when(expenseRepository.findByUserIdAndYearAndMonth(1L, 2025, 11))
                 .thenReturn(List.of(expense1, expense2));
 

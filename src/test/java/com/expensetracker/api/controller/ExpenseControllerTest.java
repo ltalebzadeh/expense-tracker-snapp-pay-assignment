@@ -7,6 +7,7 @@ import com.expensetracker.api.dto.ExpenseResponse;
 import com.expensetracker.api.dto.MonthlyReportResponse;
 import com.expensetracker.api.dto.UpdateExpenseRequest;
 import com.expensetracker.api.service.ExpenseService;
+import com.expensetracker.api.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
