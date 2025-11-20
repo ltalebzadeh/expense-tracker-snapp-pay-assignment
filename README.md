@@ -588,6 +588,7 @@ expense-tracker-api/
 - Password strength requirement
 
 **Features:**
+- Pagination for expense listing endpoint
 - Budget limits per category
 - Recurring expenses
 - Export reports to PDF/CSV
