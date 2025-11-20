@@ -508,11 +508,29 @@ mvn test
 mvn test -Dtest=ExpenseServiceTest
 ```
 
+### Integration Tests (Optional)
+
+Integration tests verify the complete system with real PostgreSQL using Testcontainers.
+
+**Disabled by default** (requires Docker running).
+
+**To enable:**
+1. Ensure Docker is running
+2. Remove `@Disabled` from `ExpenseTrackerIntegrationTest.java`
+3. Run: `mvn test -Dtest=ExpenseTrackerIntegrationTest`
+
+**What it tests:**
+- Complete user journey: Register → Create expenses → Generate report with alert
+- Real HTTP requests via TestRestTemplate
+- Real PostgreSQL in Docker container
+- True integration between Spring Boot and PostgreSQL
+
 ### Test Coverage
 
 The project includes:
 - **Unit tests** for services (business logic)
 - **Unit tests** for controllers (API endpoints)
+- **Integration test** (optional, requires Docker)
 - **Exception handling tests**
 - **Validation tests**
 
@@ -523,9 +541,11 @@ src/test/java/
 │   ├── AuthControllerTest
 │   ├── CategoryControllerTest
 │   └── ExpenseControllerTest
-└── service/
-    ├── CategoryServiceTest
-    └── ExpenseServiceTest
+├── service/
+│   ├── CategoryServiceTest
+│   └── ExpenseServiceTest
+└── integration/
+    └── ExpenseTrackerIntegrationTest
 ```
 
 ---
