@@ -165,10 +165,12 @@ cd expense-tracker-snapp-pay-assignment
 
 ### Run with Docker
 
+**Prerequisites:** Ensure ports 5432 (PostgreSQL) and 8080 (Application) are not already in use on your system.
+
 **1. Build and start all services:**
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 The application will be available at `http://localhost:8080`
@@ -176,13 +178,13 @@ The application will be available at `http://localhost:8080`
 **2. Stop services:**
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 **3. Stop and remove all data:**
 
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ---
@@ -192,7 +194,7 @@ docker-compose down -v
 **1. Start PostgreSQL:**
 
 ```bash
-docker-compose up -d postgres
+docker compose up -d postgres
 ```
 
 **2. Build the application:**
