@@ -165,7 +165,9 @@ cd expense-tracker-snapp-pay-assignment
 
 ### Run with Docker
 
-**Prerequisites:** Ensure ports 5432 (PostgreSQL) and 8080 (Application) are not already in use on your system.
+**Prerequisites:**
+- Ensure ports `5432` (PostgreSQL) and `8080` (Application) are not already in use on your system.
+- Docker must have permission to run containers. If you encounter permission errors, either add your user to the docker group or use `sudo` with docker commands.
 
 **1. Build and start all services:**
 
